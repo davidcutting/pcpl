@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: ros-tooling/setup-ros@v0.1
+        with:
+          required-ros-distributions: galactic
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
           package-name: lidar_processor
           target-ros2-distro: galactic
-          vcs-repo-file-url: "$GITHUB_REPOSITORY/deps.repos"
-      
-      
