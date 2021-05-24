@@ -23,8 +23,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ros-tooling/setup-ros@v0.1
         with:
-          required-ros-distributions: galactic
+          required-ros-distributions: foxy
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
           package-name: lidar_processor
-          target-ros2-distro: galactic
+          target-ros2-distro: foxy
