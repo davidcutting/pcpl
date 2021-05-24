@@ -21,15 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: ros-tooling/setup-ros@v0.1
-      # Run the generator and output the results to a file.
-      - run: |
-          rosinstall_generator lidar_processor --rosdistro galactic \
-          --deps-only --deps --upstream-development > /tmp/deps.repos
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
           package-name: lidar_processor
           target-ros2-distro: galactic
-          vcs-repo-file-url: /tmp/deps.repos
+          vcs-repo-file-url: "$GITHUB_REPOSITORY/deps.repos"
       
       
