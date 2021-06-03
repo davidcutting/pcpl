@@ -45,12 +45,14 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
 void LidarProcessor::raw_pcl_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
+  msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
   filtered_pcl_publisher_->publish(*msg);
 }
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
+  msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird scan frame?
   filtered_ls_publisher_->publish(*msg);
 }

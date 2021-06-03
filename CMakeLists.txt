@@ -20,8 +20,15 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
+# BUILDING
+
 add_executable(lidar_processor src/lidar_processor.cpp)
-ament_target_dependencies(lidar_processor rclcpp sensor_msgs std_msgs)
+ament_target_dependencies(
+  lidar_processor
+  rclcpp
+  sensor_msgs
+  std_msgs
+)
 target_include_directories(lidar_processor PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
