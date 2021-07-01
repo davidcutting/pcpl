@@ -76,7 +76,6 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   unfiltered_pc_publisher_->publish(*msg);
 }
 
-
 }  // namespace LidarProcessor
 
 int main(int argc, char * argv[])
