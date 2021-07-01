@@ -40,11 +40,15 @@ public:
 private:
   void raw_pcl_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
-
+  void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+  
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr filtered_pcl_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr unfiltered_pc_publisher_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr raw_pcl_subscription_;
-
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr raw_pc_subscription_;
+  
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr filtered_ls_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr unfiltered_ls_publisher_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr raw_ls_subscription_;
 };
 }  // namespace LidarProcessor
