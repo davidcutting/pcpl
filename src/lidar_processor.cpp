@@ -36,6 +36,13 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
     
   unfiltered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/unfiltered_points", rclcpp::SensorDataQoS());
+<<<<<<< HEAD
+=======
+    
+  raw_pcl_subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "/lidar/raw_points", 10,
+    std::bind(&LidarProcessor::raw_pcl_callback, this, std::placeholders::_1));
+>>>>>>> e1c2ee7041edad285f9f2a3353deeee54d86823b
     
   raw_pc_subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "/lidar/raw_points", 10,
