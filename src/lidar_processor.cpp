@@ -30,11 +30,12 @@ namespace LidarProcessor
 LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 : Node("lidar_processor", options)
 {
+
   filtered_pcl_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/filtered_points", 10);
     
   unfiltered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "/lidar/unfiltered_points", 10);
+    "/lidar/unfiltered_points", rclcpp::SensorDataQoS());
     
   raw_pcl_subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "/lidar/raw_points", 10,
@@ -51,7 +52,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
     "/lidar/unfiltered_scan", 10);
     
   raw_ls_subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-    "/lidar/raw_scan", 10,
+    "/scanner/scan", rclcpp::SensorDataQoS(),
     std::bind(&LidarProcessor::raw_ls_callback, this, std::placeholders::_1));
 }
 
