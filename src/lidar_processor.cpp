@@ -30,31 +30,31 @@ namespace LidarProcessor
 LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 : Node("lidar_processor", options)
 {
-  filtered_pcl_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "/lidar/filtered_points", 10);
-  raw_pcl_subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+
+  unfiltered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "/lidar/unfiltered_points", rclcpp::SensorDataQoS());
+    
+  raw_pc_subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "/lidar/raw_points", 10,
-    std::bind(&LidarProcessor::raw_pcl_callback, this, std::placeholders::_1));
+    std::bind(&LidarProcessor::raw_pc_callback, this, std::placeholders::_1));
 
-  filtered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
-    "/lidar/filtered_scan", 10);
-  raw_ls_subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-    "/lidar/raw_scan", 10,
-    std::bind(&LidarProcessor::raw_ls_callback, this, std::placeholders::_1));
-}
-
-void LidarProcessor::raw_pcl_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
-{
-  msg->header.stamp = this->get_clock()->now();  // rewrite time
-  msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
-  filtered_pcl_publisher_->publish(*msg);
+  unfiltered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
+    "/lidar/unfilterered_scan", rclcpp::SensorDataQoS());
+    
 }
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-  msg->header.stamp = this->get_clock()->now();  // rewrite time
+  //msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird scan frame?
-  filtered_ls_publisher_->publish(*msg);
+  unfiltered_ls_publisher_->publish(*msg);
+}
+
+void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+{
+  //msg->header.stamp = this->get_clock()->now();  // rewrite time
+  msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
+  unfiltered_pc_publisher_->publish(*msg);
 }
 
 }  // namespace LidarProcessor
