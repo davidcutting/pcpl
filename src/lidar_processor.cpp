@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <memory>
-#include <functional>
+#include "lidar_processor/lidar_processor.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
 #include <pcl/conversions.h>
 #include <pcl/filters/passthrough.h>
 
-#include "lidar_processor/lidar_processor.hpp"
+#include <memory>
+#include <functional>
 
 namespace LidarProcessor
 {
@@ -42,18 +42,14 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
     "/lidar/raw_points", 10,
     std::bind(&LidarProcessor::raw_pc_callback, this, std::placeholders::_1));
 
-  /**
-    Frame ID/timing fix
-  */
+  // Frame ID/timing fix
   unfiltered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
     "/lidar/unfilterered_scan", rclcpp::SensorDataQoS());
 
   unfiltered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/unfiltered_points", rclcpp::SensorDataQoS());
 
-  /**
-    Filtered outputs
-  */
+  // Filtered outputs
   filtered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
     "/lidar/filterered_scan", rclcpp::SensorDataQoS());
 
@@ -63,7 +59,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-  //msg->header.stamp = this->get_clock()->now();  // rewrite time
+  // msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird scan frame?
   unfiltered_ls_publisher_->publish(*msg);
 
@@ -73,12 +69,11 @@ void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPt
 
 void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-  //msg->header.stamp = this->get_clock()->now();  // rewrite time
+  // msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
   unfiltered_pc_publisher_->publish(*msg);
 
-  // begin filter
-  //
+  // *** Begin filter ***
   // Container for original & filtered data
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
@@ -90,9 +85,8 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(0.0, 1.0);
-  //pass.setFilterLimitsNegative (true);
   pass.filter(*cloud);
-  
+
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*cloud, *output);

@@ -40,7 +40,7 @@ public:
 private:
   void raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
   void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-  
+
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr raw_ls_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr raw_pc_subscription_;
 
