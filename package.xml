@@ -6,8 +6,10 @@
   <description>
     A simple PointCloud processor for ground based robots using a 3D LiDAR
   </description>
-  
+
+  <maintainer email="isc-robotics@umich.edu">Intelligent Systems Club</maintainer>
   <maintainer email="dcutting@umich.edu">David Cutting</maintainer>
+  <maintainer email="agirven@umich.edu">Avery Girven</maintainer>
   
   <license>MIT</license>
 
@@ -16,6 +18,8 @@
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

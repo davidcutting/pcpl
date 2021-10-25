@@ -16,6 +16,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(pcl_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -25,6 +26,8 @@ find_package(std_msgs REQUIRED)
 add_executable(lidar_processor src/lidar_processor.cpp)
 ament_target_dependencies(
   lidar_processor
+  pcl_conversions
+  pcl_ros
   rclcpp
   sensor_msgs
   std_msgs
