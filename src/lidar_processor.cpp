@@ -26,6 +26,7 @@
 #include <pcl/point_types.h>
 #include <pcl/conversions.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/radius_outlier_removal.h>
 
 #include <memory>
 #include <functional>
@@ -80,12 +81,20 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
 
-  // Perform the actual filtering
+  // Perform the Passthrough filtering
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(0.0, 1.0);
   pass.filter(*cloud);
+  
+  // Perform Radius Statistical Outlier Filtering
+  pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
+  outrem.setInputCloud(cloud);
+  outrem.setRadiusSearch(0.8);
+  outrem.setMinNeighborsInRadius (2);
+  outrem.setKeepOrganized(true);
+  outrem.filter (*cloud);
 
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);

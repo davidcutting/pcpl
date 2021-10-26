@@ -14,11 +14,13 @@
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
+  <build_depend>libpcl-all-dev</build_depend>
+  <exec_depend>libpcl-all</exec_depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>pcl_conversions</depend>
+  <exec_depend>pcl_msgs</exec_depend>
   <depend>pcl_ros</depend>
 
   <test_depend>ament_lint_auto</test_depend>

@@ -16,11 +16,15 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(PCL 1.10 REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 # BUILDING
 
 add_executable(lidar_processor src/lidar_processor.cpp)
@@ -38,7 +42,8 @@ target_include_directories(lidar_processor PUBLIC
 
 install(TARGETS lidar_processor
   DESTINATION lib/${PROJECT_NAME})
-
+  
+target_link_libraries (lidar_processor ${PCL_LIBRARIES})
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
