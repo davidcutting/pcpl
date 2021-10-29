@@ -27,6 +27,7 @@
 #include <pcl/conversions.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <memory>
 #include <functional>
@@ -85,7 +86,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
-  pass.setFilterLimits(0.0, 1.0);
+  pass.setFilterLimits(0.0, 0.5);
   pass.filter(*cloud);
   
   // Perform Radius Statistical Outlier Filtering
@@ -96,6 +97,11 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   outrem.setKeepOrganized(true);
   outrem.filter (*cloud);
 
+  pcl::VoxelGrid<pcl::PointXYZ> vox;
+  vox.setInputCloud (cloud);
+  vox.setLeafSize (0.01f, 0.01f, 0.01f);
+  vox.filter (*cloud);
+  
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*cloud, *output);
