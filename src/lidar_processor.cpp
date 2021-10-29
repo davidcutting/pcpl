@@ -97,6 +97,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   outrem.setKeepOrganized(true);
   outrem.filter (*cloud);
 
+  // Perform Voxel Grid filtering Filtering
   pcl::VoxelGrid<pcl::PointXYZ> vox;
   vox.setInputCloud (cloud);
   vox.setLeafSize (0.01f, 0.01f, 0.01f);
