@@ -68,7 +68,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-  // msg->header.stamp = this->get_clock()->now();  // rewrite time
+  msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird scan frame?
   unfiltered_ls_publisher_->publish(*msg);
 
@@ -78,7 +78,6 @@ void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPt
 
 void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-  // msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
   unfiltered_pc_publisher_->publish(*msg);
 
@@ -144,6 +143,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*cloud, *output);
 
+  output->header.stamp = this->get_clock()->now();  // rewrite time
   // Publish filtered cloud
   filtered_pc_publisher_->publish(*output);
 }
