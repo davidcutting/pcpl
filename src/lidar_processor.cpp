@@ -109,36 +109,6 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   vox.setLeafSize (0.01f, 0.01f, 0.01f);
   vox.filter(*cloud);
   
-  // Perform Plane Segmentation
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  // Create the segmentation object
-  pcl::SACSegmentation<pcl::PointXYZ> seg;
-  // Optional
-  seg.setOptimizeCoefficients (true);
-  // Mandatory
-  seg.setModelType(pcl::SACMODEL_PLANE);
-  seg.setMethodType(pcl::SAC_RANSAC);
-  seg.setDistanceThreshold (0.01);
-  seg.setInputCloud(cloud);
-  seg.segment(*inliers, *coefficients);
-  
-  // Perform Surface reconstruction by using Moving Least Squares
-  // Create a KD-Tree
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-  // Output has the PointNormal type in order to store the normals calculated by MLS
-  pcl::PointCloud<pcl::PointNormal> mls_points;
-  // Init object (second point type is for the normals, even if unused)
-  pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
-  mls.setComputeNormals (true);
-  // Set parameters
-  mls.setInputCloud (cloud);
-  mls.setPolynomialOrder (2);
-  mls.setSearchMethod (tree);
-  mls.setSearchRadius (0.03);
-  // Reconstruct
-  mls.process (mls_points);
-  
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*cloud, *output);
