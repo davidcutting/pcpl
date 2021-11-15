@@ -10,10 +10,11 @@
   <maintainer email="isc-robotics@umich.edu">Intelligent Systems Club</maintainer>
   <maintainer email="dcutting@umich.edu">David Cutting</maintainer>
   <maintainer email="agirven@umich.edu">Avery Girven</maintainer>
-  
+
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
