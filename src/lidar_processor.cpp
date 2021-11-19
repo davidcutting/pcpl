@@ -26,6 +26,8 @@
 #include <pcl/point_types.h>
 #include <pcl/conversions.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <memory>
 #include <functional>
@@ -59,7 +61,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-  // msg->header.stamp = this->get_clock()->now();  // rewrite time
+  msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird scan frame?
   unfiltered_ls_publisher_->publish(*msg);
 
@@ -69,7 +71,6 @@ void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPt
 
 void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-  // msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
   unfiltered_pc_publisher_->publish(*msg);
 
@@ -80,17 +81,32 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
 
-  // Perform the actual filtering
+  // Perform the Passthrough filtering
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
-  pass.setFilterLimits(0.0, 1.0);
+  pass.setFilterLimits(0.0, 0.5);
   pass.filter(*cloud);
+
+  // Perform Radius Statistical Outlier Filtering
+  pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
+  outrem.setInputCloud(cloud);
+  outrem.setRadiusSearch(0.8);
+  outrem.setMinNeighborsInRadius (2);
+  outrem.setKeepOrganized(true);
+  outrem.filter (*cloud);
+
+  // Perform Voxel Grid filtering Filtering
+  pcl::VoxelGrid<pcl::PointXYZ> vox;
+  vox.setInputCloud(cloud);
+  vox.setLeafSize (0.01f, 0.01f, 0.01f);
+  vox.filter(*cloud);
 
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*cloud, *output);
 
+  output->header.stamp = this->get_clock()->now();  // rewrite time
   // Publish filtered cloud
   filtered_pc_publisher_->publish(*output);
 }
