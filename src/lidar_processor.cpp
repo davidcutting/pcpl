@@ -46,14 +46,14 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
   // Frame ID/timing fix
   unfiltered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
-    "/lidar/unfilterered_scan", rclcpp::SensorDataQoS());
+    "/lidar/unfiltered_scan", rclcpp::SensorDataQoS());
 
   unfiltered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/unfiltered_points", rclcpp::SensorDataQoS());
 
   // Filtered outputs
   filtered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
-    "/lidar/filterered_scan", rclcpp::SensorDataQoS());
+    "/lidar/filtered_scan", rclcpp::SensorDataQoS());
 
   filtered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/filtered_points", rclcpp::SensorDataQoS());
