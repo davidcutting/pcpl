@@ -105,12 +105,12 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*cloud, *output);
+  
+  // rewrite time
+  output->header.stamp = this->get_clock()->now();  
 
-  output->header.stamp = this->get_clock()->now();  // rewrite time
   // Publish filtered cloud
-
   filtered_pc_publisher_->publish(*output);
-
 }
 
 }  // namespace LidarProcessor
