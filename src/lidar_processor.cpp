@@ -76,20 +76,20 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
 
   // *** Begin filter ***
   // Container for original & filtered data
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
 
   // Perform the Passthrough filtering
-  pcl::PassThrough<pcl::PointXYZ> pass;
+  pcl::PassThrough<pcl::PointXYZI> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(0.0, 0.5);
   pass.filter(*cloud);
 
   // Perform Radius Statistical Outlier Filtering
-  pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
+  pcl::RadiusOutlierRemoval<pcl::PointXYZI> outrem;
   outrem.setInputCloud(cloud);
   outrem.setRadiusSearch(0.8);
   outrem.setMinNeighborsInRadius (2);
@@ -97,7 +97,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   outrem.filter (*cloud);
 
   // Perform Voxel Grid filtering Filtering
-  pcl::VoxelGrid<pcl::PointXYZ> vox;
+  pcl::VoxelGrid<pcl::PointXYZI> vox;
   vox.setInputCloud(cloud);
   vox.setLeafSize (0.01f, 0.01f, 0.01f);
   vox.filter(*cloud);
@@ -108,7 +108,9 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
 
   output->header.stamp = this->get_clock()->now();  // rewrite time
   // Publish filtered cloud
+
   filtered_pc_publisher_->publish(*output);
+
 }
 
 }  // namespace LidarProcessor
