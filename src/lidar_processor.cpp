@@ -85,6 +85,11 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   pcl::PassThrough<pcl::PointXYZI> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
+  pass.setFilterLimits(0.0, 8.0);
+  pass.filter(*cloud);
+  
+  pass.setInputCloud(cloud);
+  pass.setFilterFieldName("intensity");
   pass.setFilterLimits(0.0, 0.5);
   pass.filter(*cloud);
 
