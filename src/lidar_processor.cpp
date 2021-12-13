@@ -99,7 +99,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // Perform Voxel Grid filtering Filtering
   pcl::VoxelGrid<pcl::PointXYZI> vox;
   vox.setInputCloud(cloud);
-  vox.setLeafSize (0.01f, 0.01f, 0.01f);
+  vox.setLeafSize (0.1f, 0.1f, 0.1f);
   vox.filter(*cloud);
 
   // Convert to ROS data type
@@ -108,7 +108,6 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
 
   // rewrite time
   output->header.stamp = this->get_clock()->now();
-
   // Publish filtered cloud
   filtered_pc_publisher_->publish(*output);
 }
