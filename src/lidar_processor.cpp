@@ -92,14 +92,14 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   pcl::RadiusOutlierRemoval<pcl::PointXYZI> outrem;
   outrem.setInputCloud(cloud);
   outrem.setRadiusSearch(0.8);
-  outrem.setMinNeighborsInRadius (2);
+  outrem.setMinNeighborsInRadius(2);
   outrem.setKeepOrganized(true);
-  outrem.filter (*cloud);
+  outrem.filter(*cloud);
 
   // Perform Voxel Grid filtering Filtering
   pcl::VoxelGrid<pcl::PointXYZI> vox;
   vox.setInputCloud(cloud);
-  vox.setLeafSize (0.1f, 0.1f, 0.1f);
+  vox.setLeafSize(0.1f, 0.1f, 0.1f);
   vox.filter(*cloud);
 
   // Convert to ROS data type
