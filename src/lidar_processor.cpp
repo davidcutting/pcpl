@@ -85,21 +85,13 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   pcl::PassThrough<pcl::PointXYZI> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
-  pass.setFilterLimits(0.0, 8.0);
-  pass.filter(*cloud);
-  
-  pass.setInputCloud(cloud);
-  pass.setFilterFieldName("intensity");
-  pass.setFilterLimits(0.0, 0.5);
+  pass.setFilterLimits(0.0, 3.0);
   pass.filter(*cloud);
 
-  // Perform Radius Statistical Outlier Filtering
-  pcl::RadiusOutlierRemoval<pcl::PointXYZI> outrem;
-  outrem.setInputCloud(cloud);
-  outrem.setRadiusSearch(0.8);
-  outrem.setMinNeighborsInRadius(2);
-  outrem.setKeepOrganized(true);
-  outrem.filter(*cloud);
+  pass.setInputCloud(cloud);
+  pass.setFilterFieldName("intensity");
+  pass.setFilterLimits(100.0, 255.0);
+  pass.filter(*cloud);
 
   // Perform Voxel Grid filtering Filtering
   pcl::VoxelGrid<pcl::PointXYZI> vox;
