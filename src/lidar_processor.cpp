@@ -41,7 +41,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
     "/lidar/raw_scan", 10,
     std::bind(&LidarProcessor::raw_ls_callback, this, std::placeholders::_1));
   raw_pc_subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "/lidar/raw_points", 10,
+    "/lidar/raw_points", rclcpp::SensorDataQoS(),
     std::bind(&LidarProcessor::raw_pc_callback, this, std::placeholders::_1));
 
   // Frame ID/timing fix
@@ -88,10 +88,10 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   pass.setFilterLimits(0.0, 3.0);
   pass.filter(*cloud);
 
-  pass.setInputCloud(cloud);
-  pass.setFilterFieldName("intensity");
-  pass.setFilterLimits(100.0, 255.0);
-  pass.filter(*cloud);
+ // pass.setInputCloud(cloud);
+ // pass.setFilterFieldName("intensity");
+ // pass.setFilterLimits(100.0, 255.0);
+ // pass.filter(*cloud);
 
   // Perform Voxel Grid filtering Filtering
   pcl::VoxelGrid<pcl::PointXYZI> vox;
