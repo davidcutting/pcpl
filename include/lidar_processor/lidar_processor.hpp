@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef LIDAR_PROCESSOR__LIDAR_PROCESSOR_HPP_
-#define LIDAR_PROCESSOR__LIDAR_PROCESSOR_HPP_
+#pragma once
 
 #include <memory>
 
@@ -51,5 +50,3 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr filtered_pc_publisher_;
 };
 }  // namespace LidarProcessor
-
-#endif  // LIDAR_PROCESSOR__LIDAR_PROCESSOR_HPP_

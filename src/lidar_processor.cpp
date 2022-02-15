@@ -110,15 +110,3 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
 }
 
 }  // namespace LidarProcessor
-
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  rclcpp::executors::SingleThreadedExecutor exec;
-  rclcpp::NodeOptions options;
-  auto lp_node = std::make_shared<LidarProcessor::LidarProcessor>(options);
-  exec.add_node(lp_node);
-  exec.spin();
-  rclcpp::shutdown();
-  return 0;
-}
