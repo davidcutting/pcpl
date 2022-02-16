@@ -23,8 +23,11 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
 # BUILDING
-
-add_executable(lidar_processor src/lidar_processor_main.cpp)
+add_executable(
+  lidar_processor
+  src/lidar_processor_main.cpp
+  src/lidar_processor.cpp
+)
 ament_target_dependencies(
   lidar_processor
   pcl_conversions

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <lidar_processor/lidar_processor.hpp>
 
 int main(int argc, char * argv[])

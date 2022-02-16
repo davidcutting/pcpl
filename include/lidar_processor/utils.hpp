@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 David Cutting, Avery Girven
+// Copyright (c) 2022 David Cutting
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,33 +22,67 @@
 
 #pragma once
 
-#include <memory>
+#include <cstdint>
+#include <variant>
 
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/header.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "sensor_msgs/msg/laser_scan.hpp"
+#include <pcl/point_types.h>
 
 namespace LidarProcessor
 {
-class LidarProcessor : public rclcpp::Node
+
+namespace Model
 {
-public:
-  explicit LidarProcessor(rclcpp::NodeOptions options);
-
-private:
-  void raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
-  void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-
-  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr raw_ls_subscription_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr raw_pc_subscription_;
-
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr unfiltered_ls_publisher_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr unfiltered_pc_publisher_;
-
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr filtered_ls_publisher_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr filtered_pc_publisher_;
-
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr ground_pc_publisher_;
+struct Plane
+{
+    // Coefficients of plane equation
+    double a;
+    double b;
+    double c;
+    double d;
 };
-}  // namespace LidarProcessor
+
+struct Line
+{
+    // Coeffcients of a line equation
+    double m;
+    double b;
+};
+}
+
+using RModel = std::variant<Model::Plane, Model::Line>;
+
+const float& distance_from_plane(RModel plane_model, pcl::PointXYZI point)
+{
+
+}
+
+void naive_fit(const RModel& model, const pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
+{   
+    // Iterate over PointCloud with i[0] = x, i[1] = y, i[2] = z.
+    for (pcl::PointXYZI& point : *in_pcl)
+    {  
+        // check if point fits model
+        if(distance_from_plane(model, point) < threshold)
+        {
+            // inlier to plane model
+            inliers->push_back(point);
+        }
+    }
+}
+
+// Below: WIP
+
+class RANSAC
+{
+private:
+    uint16_t k_; // max number of iterations allowed
+    RModel model_;
+
+public:
+    explicit RANSAC(RModel& model) : model_{model}{}
+
+    void fit_model()
+    {
+    }
+};
+}

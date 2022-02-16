@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 David Cutting
+// Copyright (c) 2021 David Cutting, Avery Girven
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "lidar_processor/lidar_processor.hpp"
+#include <lidar_processor/utils.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
@@ -57,6 +58,9 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
   filtered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/filtered_points", rclcpp::SensorDataQoS());
+
+  ground_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "/lidar/ground_points", rclcpp::SensorDataQoS());
 }
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
@@ -77,9 +81,14 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // *** Begin filter ***
   // Container for original & filtered data
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>)
 
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
+
+  // Find inlier points to plane model: Segment ground plane
+  RModel fit_model = Model::Plane{0, 0, 0, 0};
+  naive_fit(fit_model, cloud, ground_points);
 
   // Perform the Passthrough filtering
   pcl::PassThrough<pcl::PointXYZI> pass;
@@ -100,13 +109,18 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   vox.filter(*cloud);
 
   // Convert to ROS data type
-  sensor_msgs::msg::PointCloud2::SharedPtr output(new sensor_msgs::msg::PointCloud2);
-  pcl::toROSMsg(*cloud, *output);
+  sensor_msgs::msg::PointCloud2 output;
+  sensor_msgs::msg::PointCloud2 ground_output;
+  pcl::toROSMsg(*cloud, output);
+  pcl::toROSMsg(*ground_points, ground_output);
 
   // rewrite time
-  output->header.stamp = this->get_clock()->now();
+  output.header.stamp = this->get_clock()->now();
+  ground_output.header.stamp = this->get_clock()->now();
   // Publish filtered cloud
-  filtered_pc_publisher_->publish(*output);
+  filtered_pc_publisher_->publish(output);
+  // Publish ground points
+  ground_pc_publisher_->publish(ground_points);
 }
 
 }  // namespace LidarProcessor
