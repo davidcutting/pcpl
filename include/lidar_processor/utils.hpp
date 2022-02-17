@@ -107,12 +107,19 @@ double distance_from_plane(RModel plane_model, const pcl::PointXYZI& point)
 
 void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
 {   
-    // Iterate over PointCloud with i[0] = x, i[1] = y, i[2] = z.
-    for (pcl::PointXYZI& point : *in_pcl)
-    {  
+    // Iterate over PointCloud with it[0] = x, it[1] = y, it[2] = z.
+    for (pcl::PointCloud<pcl::PointXYZI>::iterator it = in_pcl->begin(); it != in_pcl->end(); it++)
+    {
         // check if point fits model
+        pcl::PointXYZI point;
+        point.x = it->x;
+        point.y = it->y;
+        point.z = it->z;
+        point.intensity = it->intensity;
         if(distance_from_plane(model, point) < threshold)
         {
+            // NOTE: FILTER OUT POINT HERE
+            in_pcl->erase(it);
             // inlier to plane model
             inliers->push_back(point);
         }

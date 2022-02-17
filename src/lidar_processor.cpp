@@ -67,7 +67,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
   transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   using namespace std::chrono_literals;
-  this->get_parameter("ground_point_model_threshold", ground_point_model_threshold_);
+  this->declare_parameter<float>("ground_point_model_threshold", 0.1f);
   param_update_timer_ = this->create_wall_timer(
       1000ms, std::bind(&LidarProcessor::update_params, this)
       );
@@ -105,7 +105,8 @@ void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl
 
   // Use gravitational acceleration vector as plane normal
   // Ignoring orientation for now, as we assume that we are relatively flat on the ground
-  NormalVector norm{0.0f, 0.0f, last_imu_->linear_acceleration.z};
+  NormalVector norm{0.0f, 0.0f, last_imu_ != nullptr ? last_imu_->linear_acceleration.z : -1.0f};
+  
 
   // Get point in center of robot base footprint
   auto trans = tf_buffer_->lookupTransform("base_footprint", "laser_link", tf2::TimePointZero);
@@ -156,9 +157,10 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   pcl::toROSMsg(*cloud, output);
   pcl::toROSMsg(*ground_points, ground_output);
 
-  // rewrite time
+  // rewrite time and space
   output.header.stamp = this->get_clock()->now();
   ground_output.header.stamp = this->get_clock()->now();
+  ground_output.header.frame_id = output.header.frame_id;
 
   // publish filtered pointclouds
   filtered_pc_publisher_->publish(output);

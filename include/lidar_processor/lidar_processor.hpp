@@ -47,8 +47,8 @@ public:
   explicit LidarProcessor(rclcpp::NodeOptions options);
 
 private:
-  float ground_point_model_threshold_{0.2f};
-  sensor_msgs::msg::Imu::SharedPtr last_imu_{nullptr};
+  float ground_point_model_threshold_{};
+  sensor_msgs::msg::Imu::SharedPtr last_imu_{};
   rclcpp::TimerBase::SharedPtr param_update_timer_;
 
   void passthrough_stage();
