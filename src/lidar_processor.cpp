@@ -45,6 +45,10 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
     "/lidar/raw_points", rclcpp::SensorDataQoS(),
     std::bind(&LidarProcessor::raw_pc_callback, this, std::placeholders::_1));
 
+  imu_subscription_ = this->create_subscription<sensor_msgs::msg::Imu>(
+    "/lidar/imu", rclcpp::SensorDataQoS(),
+    std::bind(&LidarProcessor::imu_callback, this, std::placeholders::_1));
+
   // Frame ID/timing fix
   unfiltered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
     "/lidar/unfiltered_scan", rclcpp::SensorDataQoS());
@@ -61,6 +65,11 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
   ground_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/ground_points", rclcpp::SensorDataQoS());
+}
+
+void LidarProcessor::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
+{
+  last_imu_ = msg;
 }
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
@@ -81,14 +90,15 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // *** Begin filter ***
   // Container for original & filtered data
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>)
+  pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>);
 
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
 
   // Find inlier points to plane model: Segment ground plane
   RModel fit_model = Model::Plane{0, 0, 0, 0};
-  naive_fit(fit_model, cloud, ground_points);
+
+  naive_fit(fit_model, cloud, ground_points, 1.0f);
 
   // Perform the Passthrough filtering
   pcl::PassThrough<pcl::PointXYZI> pass;
@@ -120,7 +130,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // Publish filtered cloud
   filtered_pc_publisher_->publish(output);
   // Publish ground points
-  ground_pc_publisher_->publish(ground_points);
+  ground_pc_publisher_->publish(ground_output);
 }
 
 }  // namespace LidarProcessor

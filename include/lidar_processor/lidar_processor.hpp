@@ -28,6 +28,7 @@
 #include "std_msgs/msg/header.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 
 namespace LidarProcessor
 {
@@ -37,11 +38,16 @@ public:
   explicit LidarProcessor(rclcpp::NodeOptions options);
 
 private:
+  sensor_msgs::msg::Imu::SharedPtr last_imu_{nullptr};
+
   void raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
   void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
 
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr raw_ls_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr raw_pc_subscription_;
+
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscription_;
 
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr unfiltered_ls_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr unfiltered_pc_publisher_;

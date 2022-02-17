@@ -26,6 +26,7 @@
 #include <variant>
 
 #include <pcl/point_types.h>
+#include <pcl/conversions.h>
 
 namespace LidarProcessor
 {
@@ -51,12 +52,53 @@ struct Line
 
 using RModel = std::variant<Model::Plane, Model::Line>;
 
-const float& distance_from_plane(RModel plane_model, pcl::PointXYZI point)
+struct NormalVector
 {
+    double x;
+    double y;
+    double z;
+};
 
+void find_plane_coefficients(RModel& plane_model, NormalVector norm, pcl::PointXYZI point)
+{
+    double a;
+    double b;
+    double c;
+    double d;
+
+    // Return plane coefficients
+    plane_model = Model::Plane{a, b, c, d};
 }
 
-void naive_fit(const RModel& model, const pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
+double distance_from_plane(RModel plane_model, pcl::PointXYZI point)
+{
+    // Initialize to infinity
+    double distance = std::numeric_limits<double>().infinity();
+
+    // See if the passed in Model is truly a plane model
+    if (const auto* plane = std::get_if<Model::Plane>(&plane_model); plane != nullptr)
+    {
+        // Calculate distance of point from plane
+
+        // Find: | ax + by + cz - (-d) |
+        double top_half = plane->a * point.x
+                        + plane->b * point.y
+                        + plane->c * point.z
+                        - (-plane->d);
+        top_half = std::abs(top_half);
+
+        // Find: sqrt( a^2 + b^2 + c^2 )
+        double bottom_half = plane->a * plane->a + plane->b * plane->b + plane->c * plane->c;
+        bottom_half = std::sqrt(bottom_half);
+
+        // Divide numerator and denominator
+        return top_half / bottom_half;
+    }
+    // Return: infinity if not a plane, this is an error.
+    return distance;
+}
+
+void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
 {   
     // Iterate over PointCloud with i[0] = x, i[1] = y, i[2] = z.
     for (pcl::PointXYZI& point : *in_pcl)
@@ -69,20 +111,4 @@ void naive_fit(const RModel& model, const pcl::PointCloud<pcl::PointXYZI>::Ptr i
         }
     }
 }
-
-// Below: WIP
-
-class RANSAC
-{
-private:
-    uint16_t k_; // max number of iterations allowed
-    RModel model_;
-
-public:
-    explicit RANSAC(RModel& model) : model_{model}{}
-
-    void fit_model()
-    {
-    }
-};
 }
