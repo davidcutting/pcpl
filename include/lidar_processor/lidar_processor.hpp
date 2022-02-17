@@ -49,6 +49,7 @@ public:
 private:
   float ground_point_model_threshold_{};
   sensor_msgs::msg::Imu::SharedPtr last_imu_{};
+  sensor_msgs::msg::PointCloud2::SharedPtr last_pcl_{};
   rclcpp::TimerBase::SharedPtr param_update_timer_;
 
   void passthrough_stage();
