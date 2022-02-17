@@ -154,6 +154,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2 output;
   sensor_msgs::msg::PointCloud2 ground_output;
+  sensor_msgs::msg::LaserScan output_scan;
   pcl::toROSMsg(*cloud, output);
   pcl::toROSMsg(*ground_points, ground_output);
 
@@ -161,10 +162,22 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   output.header.stamp = this->get_clock()->now();
   ground_output.header.stamp = this->get_clock()->now();
   ground_output.header.frame_id = output.header.frame_id;
+  output_scan.header.stamp = this->get_clock()->now();
+  output_scan.header.frame_id = output.header.frame_id;
 
   // publish filtered pointclouds
   filtered_pc_publisher_->publish(output);
   ground_pc_publisher_->publish(ground_output);
+
+  // flatten pointcloud
+  for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
+  {
+    // fill laserscan with data.
+    // Idea:  Basically you need to find vector between ReturnPoint(R) = <x,y> and LidarPose(L) = <x,y>.
+    //        You'd use the magnitude of vector RL for the range and you'd find the angle between RL and vector <0,0>
+    //        which is the 0 rad in the lidar's view. You'd ignore z because ground points are removed
+  }
+  filtered_ls_publisher_->publish(output_scan);
 }
 
 }  // namespace LidarProcessor
