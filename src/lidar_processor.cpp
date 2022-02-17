@@ -104,6 +104,7 @@ void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl
   RModel fit_model = Model::Plane{};
 
   // Use gravitational acceleration vector as plane normal
+  // Ignoring orientation for now, as we assume that we are relatively flat on the ground
   NormalVector norm{0.0f, 0.0f, last_imu_->linear_acceleration.z};
 
   // Get point in center of robot base footprint

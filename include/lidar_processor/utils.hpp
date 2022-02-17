@@ -61,13 +61,20 @@ struct NormalVector
 
 void find_plane_coefficients(RModel& plane_model, NormalVector norm, pcl::PointXYZI point)
 {
-    double a;
-    double b;
-    double c;
-    double d;
+    // See if the passed in Model is truly a plane model
+    if (const auto* plane = std::get_if<Model::Plane>(&plane_model); plane != nullptr)
+    {
+        double d = norm.x * point.x
+                 + norm.y * point.y
+                 + norm.z * point.z;
 
-    // Return plane coefficients
-    plane_model = Model::Plane{a, b, c, d};
+        // Return plane coefficients
+        plane_model = Model::Plane{norm.x, norm.y, norm.z, d};
+    }
+    else
+    {
+        assert(false && "Passed model which is not plane.");
+    }
 }
 
 double distance_from_plane(RModel plane_model, const pcl::PointXYZI& point)
