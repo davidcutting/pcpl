@@ -23,12 +23,21 @@
 #pragma once
 
 #include <memory>
+#include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/conversions.h>
+
+#include <tf2/exceptions.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 namespace LidarProcessor
 {
@@ -38,8 +47,14 @@ public:
   explicit LidarProcessor(rclcpp::NodeOptions options);
 
 private:
+  float ground_point_model_threshold_{0.2f};
   sensor_msgs::msg::Imu::SharedPtr last_imu_{nullptr};
+  rclcpp::TimerBase::SharedPtr param_update_timer_;
 
+  void passthrough_stage();
+  void ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground);
+
+  void update_params();
   void raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
   void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
@@ -56,5 +71,9 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr filtered_pc_publisher_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr ground_pc_publisher_;
+
+  // TF
+  std::shared_ptr<tf2_ros::TransformListener> transform_listener_;
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 };
 }  // namespace LidarProcessor

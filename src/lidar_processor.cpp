@@ -23,9 +23,6 @@
 #include "lidar_processor/lidar_processor.hpp"
 #include <lidar_processor/utils.hpp>
 
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_types.h>
-#include <pcl/conversions.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/voxel_grid.h>
@@ -65,11 +62,60 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
   ground_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/ground_points", rclcpp::SensorDataQoS());
+
+  tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+  using namespace std::chrono_literals;
+  this->get_parameter("ground_point_model_threshold", ground_point_model_threshold_);
+  param_update_timer_ = this->create_wall_timer(
+      1000ms, std::bind(&LidarProcessor::update_params, this)
+      );
+}
+
+void LidarProcessor::update_params()
+{
+  this->get_parameter("ground_point_model_threshold", ground_point_model_threshold_);
 }
 
 void LidarProcessor::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
   last_imu_ = msg;
+}
+
+void LidarProcessor::passthrough_stage()
+{
+  // Perform the Passthrough filtering
+  // pcl::PassThrough<pcl::PointXYZI> pass;
+  // pass.setInputCloud(cloud);
+  // pass.setFilterFieldName("z");
+  // pass.setFilterLimits(0.0, 3.0);
+  // pass.filter(*cloud);
+
+  // pass.setInputCloud(cloud);
+  // pass.setFilterFieldName("intensity");
+  // pass.setFilterLimits(100.0, 255.0);
+  // pass.filter(*cloud);
+}
+
+void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground)
+{
+  // Find inlier points to plane model: Segment ground plane
+  RModel fit_model = Model::Plane{};
+
+  // Use gravitational acceleration vector as plane normal
+  NormalVector norm{0.0f, 0.0f, last_imu_->linear_acceleration.z};
+
+  // Get point in center of robot base footprint
+  auto trans = tf_buffer_->lookupTransform("base_footprint", "laser_link", tf2::TimePointZero);
+  pcl::PointXYZI point;
+  point.x = trans.transform.translation.x;
+  point.y = trans.transform.translation.y;
+  point.z = trans.transform.translation.z;
+
+  // Segment
+  find_plane_coefficients(fit_model, norm, point);
+  naive_fit(fit_model, cloud, ground, ground_point_model_threshold_);
 }
 
 void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
@@ -95,28 +141,13 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
 
-  // Find inlier points to plane model: Segment ground plane
-  RModel fit_model = Model::Plane{0, 0, 0, 0};
-
-  naive_fit(fit_model, cloud, ground_points, 1.0f);
-
-  // Perform the Passthrough filtering
-  pcl::PassThrough<pcl::PointXYZI> pass;
-  pass.setInputCloud(cloud);
-  pass.setFilterFieldName("z");
-  pass.setFilterLimits(0.0, 3.0);
-  pass.filter(*cloud);
-
- // pass.setInputCloud(cloud);
- // pass.setFilterFieldName("intensity");
- // pass.setFilterLimits(100.0, 255.0);
- // pass.filter(*cloud);
+  ground_segmentation(cloud, ground_points);
 
   // Perform Voxel Grid filtering Filtering
-  pcl::VoxelGrid<pcl::PointXYZI> vox;
-  vox.setInputCloud(cloud);
-  vox.setLeafSize(0.1f, 0.1f, 0.1f);
-  vox.filter(*cloud);
+  // pcl::VoxelGrid<pcl::PointXYZI> vox;
+  // vox.setInputCloud(cloud);
+  // vox.setLeafSize(0.1f, 0.1f, 0.1f);
+  // vox.filter(*cloud);
 
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2 output;
@@ -127,9 +158,9 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // rewrite time
   output.header.stamp = this->get_clock()->now();
   ground_output.header.stamp = this->get_clock()->now();
-  // Publish filtered cloud
+
+  // publish filtered pointclouds
   filtered_pc_publisher_->publish(output);
-  // Publish ground points
   ground_pc_publisher_->publish(ground_output);
 }
 

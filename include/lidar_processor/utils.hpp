@@ -70,7 +70,7 @@ void find_plane_coefficients(RModel& plane_model, NormalVector norm, pcl::PointX
     plane_model = Model::Plane{a, b, c, d};
 }
 
-double distance_from_plane(RModel plane_model, pcl::PointXYZI point)
+double distance_from_plane(RModel plane_model, const pcl::PointXYZI& point)
 {
     // Initialize to infinity
     double distance = std::numeric_limits<double>().infinity();
