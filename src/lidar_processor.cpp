@@ -137,7 +137,6 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
   unfiltered_pc_publisher_->publish(*msg);
 
-  // *** Begin filter ***
   // Container for original & filtered data
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>);
@@ -185,7 +184,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   output_scan.time_increment = 0.0; // ???
   output_scan.scan_time = 1.0 / 30.0;
   output_scan.range_min = 0.0;
-  output_scan.range_max = std::numeric_limits<float>().infinity();
+  output_scan.range_max = std::numeric_limits<float>().max();
 
   // initialize output laserscan ranges to infinity
   uint32_t ranges_size = std::ceil((output_scan.angle_max - output_scan.angle_min) / output_scan.angle_increment);
@@ -203,19 +202,15 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
     // x = rcos(theta)
     // y = rsin(theta)
     float range = std::hypot(it->x, it->y); // sqrt of x^2 + y^2
-    float angle = atan(it->y / it->x); // tan inverse of y/x
+    float angle = std::atan(it->y / it->x); // tan inverse of y/x
 
     // Sample the pointcloud so that we dont stuff more points into the laser scan than what we decided as our resolution
-    uint32_t index = (angle - output_scan.angle_min) / output_scan.angle_increment;
+    uint32_t index = (uint32_t) std::floor((angle - output_scan.angle_min) / output_scan.angle_increment);
     assert((index > 0 || index < ranges_size) && "Accessing indices out of range.");
     
-    //TODO doesn't seem to filter out many duplicate indexes. Lower epsilon?
-    if (std::abs(range - output_scan.ranges[index]) < 0.001) continue;
-    
-    if (range < output_scan.ranges[index])
+    // TODO: Parameterize epsilon
+    if (range < output_scan.ranges[index] && std::abs(range - output_scan.ranges[index]) > 0.01)
     {
-      //TODO remove when done testing
-      RCLCPP_INFO(this->get_logger(), "Range is: %f at index: %i", range, index);
       assert(range != std::numeric_limits<float>::infinity() && "inf detected.");
 
       output_scan.ranges[index] = range;
