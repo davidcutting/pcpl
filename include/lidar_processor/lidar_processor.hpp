@@ -52,7 +52,7 @@ private:
   sensor_msgs::msg::PointCloud2::SharedPtr last_pcl_{};
   rclcpp::TimerBase::SharedPtr param_update_timer_;
 
-  void passthrough_stage();
+  void passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
   void ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground);
 
   void update_params();

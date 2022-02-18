@@ -23,6 +23,7 @@
 #include "lidar_processor/lidar_processor.hpp"
 #include <lidar_processor/utils.hpp>
 
+#include <pcl/filters/crop_box.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/voxel_grid.h>
@@ -49,14 +50,12 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
   // Frame ID/timing fix
   unfiltered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
     "/lidar/unfiltered_scan", rclcpp::SensorDataQoS());
-
   unfiltered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/unfiltered_points", rclcpp::SensorDataQoS());
 
   // Filtered outputs
   filtered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
     "/lidar/filtered_scan", rclcpp::SensorDataQoS());
-
   filtered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/filtered_points", rclcpp::SensorDataQoS());
 
@@ -83,19 +82,23 @@ void LidarProcessor::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
   last_imu_ = msg;
 }
 
-void LidarProcessor::passthrough_stage()
+void LidarProcessor::passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
-  // Perform the Passthrough filtering
-  // pcl::PassThrough<pcl::PointXYZI> pass;
-  // pass.setInputCloud(cloud);
-  // pass.setFilterFieldName("z");
-  // pass.setFilterLimits(0.0, 3.0);
-  // pass.filter(*cloud);
+  // Crop out robot body
+  pcl::CropBox<pcl::PointXYZI> crop_box;
+  crop_box.setInputCloud(cloud);
+  crop_box.setMin(Eigen::Vector4f(-0.2f, -0.2f, -0.2f, 1));
+  crop_box.setMax(Eigen::Vector4f(0.2f, 0.2f, 0.2f, 1));
+  crop_box.setNegative(true); // filter out points in box
+  crop_box.filter(*cloud);
 
-  // pass.setInputCloud(cloud);
-  // pass.setFilterFieldName("intensity");
-  // pass.setFilterLimits(100.0, 255.0);
-  // pass.filter(*cloud);
+  // Perform Passthrough filtering
+  pcl::PassThrough<pcl::PointXYZI> pass;
+  pass.setInputCloud(cloud);
+  pass.setFilterFieldName("intensity");
+  pass.setFilterLimits(0.0, 0.6);
+  pass.setNegative(false);
+  pass.filter(*cloud);
 }
 
 void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground)
@@ -141,6 +144,8 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
 
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
+
+  passthrough_stage(cloud);
 
   ground_segmentation(cloud, ground_points);
 
