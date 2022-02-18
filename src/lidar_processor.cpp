@@ -106,7 +106,6 @@ void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl
   // Use gravitational acceleration vector as plane normal
   // Ignoring orientation for now, as we assume that we are relatively flat on the ground
   NormalVector norm{0.0f, 0.0f, last_imu_ != nullptr ? last_imu_->linear_acceleration.z : -1.0f};
-  
 
   // Get point in center of robot base footprint
   auto trans = tf_buffer_->lookupTransform("base_footprint", "laser_link", tf2::TimePointZero);
@@ -169,15 +168,27 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   filtered_pc_publisher_->publish(output);
   ground_pc_publisher_->publish(ground_output);
 
+  //
   // Flatten PointCloud into LaserScan
+  //
+
+  // fill out configuration information
+  // TODO: PARAMETERIZE
+  output_scan.angle_min = -M_PI;
+  output_scan.angle_max = M_PI;
+  output_scan.angle_increment = M_PI / 180.0f;
+  output_scan.time_increment = 0.0f; // ???
+  output_scan.scan_time = 1.0f / 30.0f;
+  output_scan.range_min = std::numeric_limits<float>().infinity();
+  output_scan.range_max = 0.0f;
+
+  // initialize output laserscan ranges to infinity
+  uint32_t ranges_size = std::ceil((output_scan.angle_max - output_scan.angle_min) / output_scan.angle_increment);
+  output_scan.ranges.assign(ranges_size, std::numeric_limits<double>::infinity());
+  assert(output_scan.ranges.max_size() == ranges_size && "WTF IS THIS");
+
   for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
   {
-    if (last_pcl_ == nullptr)
-    {
-      // dont segfault on first iteration lmao
-      last_pcl_ = msg;
-      return;
-    }
     // fill laserscan with data.
     // Idea:  Basically you need to find vector between ReturnPoint(R) = <x,y> and LidarPose(L) = <x,y>.
     //        You'd use the magnitude of vector RL for the range and you'd find the angle between RL and vector <0,0>
@@ -185,22 +196,19 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
     // Note:  Not sure if this is the most optimal, but I just convert cartesian to polar coordinates.
     // x = rcos(theta)
     // y = rsin(theta)
-    double r = sqrt(it->x * it->x + it->y * it->y); // sqrt of x^2 + y^2
-    // double theta = atan(it->x/ it->y); // tan inverse of x/y, but i dont think this is needed because pcl-ls doesnt use it
-    output_scan.ranges.push_back(r);
-    output_scan.intensities.push_back(it->intensity);
+    double range = std::hypot(it->x, it->y); // sqrt of x^2 + y^2
+    double angle = atan(it->y / it->x); // tan inverse of y/x
 
-    // fill out configuration information
-    // TODO: PARAMETERIZE
-    output_scan.angle_min = -M_PI;
-    output_scan.angle_max = M_PI;
-    output_scan.angle_increment = M_PI / 180.0f;
-    output_scan.time_increment = 1.0f / 30.0f;
-    output_scan.scan_time = msg->header.stamp.sec - last_pcl_->header.stamp.sec;
-    output_scan.range_min = std::numeric_limits<float>().infinity();
-    output_scan.range_min = output_scan.range_min > r ? r : output_scan.range_min;
-    output_scan.range_max = 0.0f;
-    output_scan.range_max = output_scan.range_max < r ? r : output_scan.range_max;
+    output_scan.range_min = output_scan.range_min > range ? range : output_scan.range_min;
+    output_scan.range_max = output_scan.range_max < range ? range : output_scan.range_max;
+
+    // Sample the pointcloud so that we dont stuff more points into the laser scan than what we decided as our resolution
+    int index = (angle - output_scan.angle_min) / output_scan.angle_increment;
+    if (range < output_scan.ranges[index])
+    {
+      output_scan.ranges[index] = range;
+      output_scan.intensities[index] = it->intensity;
+    }
   }
   filtered_ls_publisher_->publish(output_scan);
 
