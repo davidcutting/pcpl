@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 David Cutting, Avery Girven
+// Copyright (c) 2021 David Cutting, Avery Girven, Andrew Ealovega
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -190,6 +190,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // initialize output laserscan ranges to infinity
   uint32_t ranges_size = std::ceil((output_scan.angle_max - output_scan.angle_min) / output_scan.angle_increment);
   output_scan.ranges.assign(ranges_size, std::numeric_limits<float>::infinity());
+  output_scan.intensities.assign(ranges_size, 0.0);
   assert(output_scan.ranges.size() == ranges_size && "Somehow, the scan vector size isn't right.");
 
   for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
@@ -207,8 +208,16 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
     // Sample the pointcloud so that we dont stuff more points into the laser scan than what we decided as our resolution
     uint32_t index = (angle - output_scan.angle_min) / output_scan.angle_increment;
     assert((index > 0 || index < ranges_size) && "Accessing indices out of range.");
+    
+    //TODO doesn't seem to filter out many duplicate indexes. Lower epsilon?
+    if (std::abs(range - output_scan.ranges[index]) < 0.001) continue;
+    
     if (range < output_scan.ranges[index])
     {
+      //TODO remove when done testing
+      RCLCPP_INFO(this->get_logger(), "Range is: %f at index: %i", range, index);
+      assert(range != std::numeric_limits<float>::infinity() && "inf detected.");
+
       output_scan.ranges[index] = range;
     }
   }
