@@ -159,9 +159,9 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
 
   // rewrite time and space
   output.header.stamp = this->get_clock()->now();
-  ground_output.header.stamp = this->get_clock()->now();
+  ground_output.header.stamp = output.header.stamp;
   ground_output.header.frame_id = output.header.frame_id;
-  output_scan.header.stamp = this->get_clock()->now();
+  output_scan.header.stamp = output.header.stamp;
   output_scan.header.frame_id = output.header.frame_id;
 
   // publish filtered pointclouds
@@ -176,16 +176,16 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   // TODO: PARAMETERIZE
   output_scan.angle_min = -M_PI;
   output_scan.angle_max = M_PI;
-  output_scan.angle_increment = M_PI / 180.0f;
-  output_scan.time_increment = 0.0f; // ???
-  output_scan.scan_time = 1.0f / 30.0f;
-  output_scan.range_min = std::numeric_limits<float>().infinity();
-  output_scan.range_max = 0.0f;
+  output_scan.angle_increment = M_PI / 180.0;
+  output_scan.time_increment = 0.0; // ???
+  output_scan.scan_time = 1.0 / 30.0;
+  output_scan.range_min = 0.0;
+  output_scan.range_max = std::numeric_limits<float>().infinity();
 
   // initialize output laserscan ranges to infinity
   uint32_t ranges_size = std::ceil((output_scan.angle_max - output_scan.angle_min) / output_scan.angle_increment);
-  output_scan.ranges.assign(ranges_size, std::numeric_limits<double>::infinity());
-  assert(output_scan.ranges.max_size() == ranges_size && "WTF IS THIS");
+  output_scan.ranges.assign(ranges_size, std::numeric_limits<float>::infinity());
+  assert(output_scan.ranges.size() == ranges_size && "Somehow, the scan vector size isn't right.");
 
   for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
   {
@@ -196,18 +196,15 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
     // Note:  Not sure if this is the most optimal, but I just convert cartesian to polar coordinates.
     // x = rcos(theta)
     // y = rsin(theta)
-    double range = std::hypot(it->x, it->y); // sqrt of x^2 + y^2
-    double angle = atan(it->y / it->x); // tan inverse of y/x
-
-    output_scan.range_min = output_scan.range_min > range ? range : output_scan.range_min;
-    output_scan.range_max = output_scan.range_max < range ? range : output_scan.range_max;
+    float range = std::hypot(it->x, it->y); // sqrt of x^2 + y^2
+    float angle = atan(it->y / it->x); // tan inverse of y/x
 
     // Sample the pointcloud so that we dont stuff more points into the laser scan than what we decided as our resolution
-    int index = (angle - output_scan.angle_min) / output_scan.angle_increment;
+    uint32_t index = (angle - output_scan.angle_min) / output_scan.angle_increment;
+    assert((index > 0 || index < ranges_size) && "Accessing indices out of range.");
     if (range < output_scan.ranges[index])
     {
       output_scan.ranges[index] = range;
-      output_scan.intensities[index] = it->intensity;
     }
   }
   filtered_ls_publisher_->publish(output_scan);
