@@ -40,7 +40,23 @@ target_include_directories(lidar_processor PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS lidar_processor
+add_executable(
+  pointcloud_merge
+  src/pointcloud_merge.cpp
+)
+ament_target_dependencies(
+  pointcloud_merge
+  pcl_conversions
+  pcl_ros
+  rclcpp
+  sensor_msgs
+  std_msgs
+)
+target_include_directories(pointcloud_merge PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+  
+install(TARGETS lidar_processor pointcloud_merge
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
