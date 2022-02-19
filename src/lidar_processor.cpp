@@ -148,16 +148,9 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
 
   ground_segmentation(cloud, ground_points);
 
-  // Perform Voxel Grid filtering Filtering
-  // pcl::VoxelGrid<pcl::PointXYZI> vox;
-  // vox.setInputCloud(cloud);
-  // vox.setLeafSize(0.1f, 0.1f, 0.1f);
-  // vox.filter(*cloud);
-
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2 output;
   sensor_msgs::msg::PointCloud2 ground_output;
-  sensor_msgs::msg::LaserScan output_scan;
   pcl::toROSMsg(*cloud, output);
   pcl::toROSMsg(*ground_points, ground_output);
 
@@ -165,58 +158,10 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   output.header.stamp = this->get_clock()->now();
   ground_output.header.stamp = output.header.stamp;
   ground_output.header.frame_id = output.header.frame_id;
-  output_scan.header.stamp = output.header.stamp;
-  output_scan.header.frame_id = output.header.frame_id;
 
   // publish filtered pointclouds
   filtered_pc_publisher_->publish(output);
   ground_pc_publisher_->publish(ground_output);
-
-  //
-  // Flatten PointCloud into LaserScan
-  //
-
-  // fill out configuration information
-  // TODO: PARAMETERIZE
-  output_scan.angle_min = -M_PI;
-  output_scan.angle_max = M_PI;
-  output_scan.angle_increment = M_PI / 180.0;
-  output_scan.time_increment = 0.0; // ???
-  output_scan.scan_time = 1.0 / 30.0;
-  output_scan.range_min = 0.0;
-  output_scan.range_max = std::numeric_limits<float>().max();
-
-  // initialize output laserscan ranges to infinity
-  uint32_t ranges_size = std::ceil((output_scan.angle_max - output_scan.angle_min) / output_scan.angle_increment);
-  output_scan.ranges.assign(ranges_size, std::numeric_limits<float>::infinity());
-  output_scan.intensities.assign(ranges_size, 0.0);
-  assert(output_scan.ranges.size() == ranges_size && "Somehow, the scan vector size isn't right.");
-
-  for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
-  {
-    // fill laserscan with data.
-    // Idea:  Basically you need to find vector between ReturnPoint(R) = <x,y> and LidarPose(L) = <x,y>.
-    //        You'd use the magnitude of vector RL for the range and you'd find the angle between RL and vector <0,0>
-    //        which is the 0 rad in the lidar's view. You'd ignore z because ground points are removed.
-    // Note:  Not sure if this is the most optimal, but I just convert cartesian to polar coordinates.
-    // x = rcos(theta)
-    // y = rsin(theta)
-    float range = std::hypot(it->x, it->y); // sqrt of x^2 + y^2
-    float angle = std::atan(it->y / it->x); // tan inverse of y/x
-
-    // Sample the pointcloud so that we dont stuff more points into the laser scan than what we decided as our resolution
-    uint32_t index = (uint32_t) std::floor((angle - output_scan.angle_min) / output_scan.angle_increment);
-    assert((index > 0 || index < ranges_size) && "Accessing indices out of range.");
-    
-    // TODO: Parameterize epsilon
-    if (range < output_scan.ranges[index] && std::abs(range - output_scan.ranges[index]) > 0.01)
-    {
-      assert(range != std::numeric_limits<float>::infinity() && "inf detected.");
-
-      output_scan.ranges[index] = range;
-    }
-  }
-  filtered_ls_publisher_->publish(output_scan);
 
   last_pcl_ = msg;
 }
