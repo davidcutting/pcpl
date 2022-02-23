@@ -36,17 +36,17 @@ namespace Model
 struct Plane
 {
     // Coefficients of plane equation
-    double a;
-    double b;
-    double c;
-    double d;
+    float a;
+    float b;
+    float c;
+    float d;
 };
 
 struct Line
 {
     // Coeffcients of a line equation
-    double m;
-    double b;
+    float m;
+    float b;
 };
 }
 
@@ -54,17 +54,17 @@ using RModel = std::variant<Model::Plane, Model::Line>;
 
 struct NormalVector
 {
-    double x;
-    double y;
-    double z;
+    float x;
+    float y;
+    float z;
 };
 
-void find_plane_coefficients(RModel& plane_model, NormalVector norm, pcl::PointXYZI point)
+inline void find_plane_coefficients(RModel& plane_model, const NormalVector& norm, const pcl::PointXYZI& point) noexcept
 {
     // See if the passed in Model is truly a plane model
     if (const auto* plane = std::get_if<Model::Plane>(&plane_model); plane != nullptr)
     {
-        double d = norm.x * point.x
+        float d = norm.x * point.x
                  + norm.y * point.y
                  + norm.z * point.z;
 
@@ -77,10 +77,10 @@ void find_plane_coefficients(RModel& plane_model, NormalVector norm, pcl::PointX
     }
 }
 
-double distance_from_plane(RModel plane_model, const pcl::PointXYZI& point)
+inline float distance_from_plane(const RModel& plane_model, const pcl::PointXYZI& point) noexcept
 {
     // Initialize to infinity
-    double distance = std::numeric_limits<double>().infinity();
+    float distance = std::numeric_limits<float>().infinity();
 
     // See if the passed in Model is truly a plane model
     if (const auto* plane = std::get_if<Model::Plane>(&plane_model); plane != nullptr)
@@ -88,15 +88,15 @@ double distance_from_plane(RModel plane_model, const pcl::PointXYZI& point)
         // Calculate distance of point from plane
 
         // Find: | ax + by + cz - (-d) |
-        double top_half = plane->a * point.x
+        float top_half = plane->a * point.x
                         + plane->b * point.y
                         + plane->c * point.z
                         - (-plane->d);
         top_half = std::abs(top_half);
 
         // Find: sqrt( a^2 + b^2 + c^2 )
-        double bottom_half = plane->a * plane->a + plane->b * plane->b + plane->c * plane->c;
-        bottom_half = std::sqrt(bottom_half);
+        float bottom_half = plane->a * plane->a + plane->b * plane->b + plane->c * plane->c;
+        bottom_half = sqrtf(bottom_half);
 
         // Divide numerator and denominator
         return top_half / bottom_half;
@@ -105,7 +105,7 @@ double distance_from_plane(RModel plane_model, const pcl::PointXYZI& point)
     return distance;
 }
 
-void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
+inline void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
 {   
     // Iterate over PointCloud with it[0] = x, it[1] = y, it[2] = z.
     pcl::PointCloud<pcl::PointXYZI>::iterator it = in_pcl->begin();

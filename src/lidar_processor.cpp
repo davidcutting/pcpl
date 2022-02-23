@@ -108,7 +108,7 @@ void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl
 
   // Use gravitational acceleration vector as plane normal
   // Ignoring orientation for now, as we assume that we are relatively flat on the ground
-  NormalVector norm{0.0f, 0.0f, last_imu_ != nullptr ? last_imu_->linear_acceleration.z : -1.0f};
+  NormalVector norm{0.0f, 0.0f, static_cast<float>(last_imu_ != nullptr ? last_imu_->linear_acceleration.z : -1.0f)};
 
   // Get point in center of robot base footprint
   auto trans = tf_buffer_->lookupTransform("base_footprint", "laser_link", tf2::TimePointZero);
