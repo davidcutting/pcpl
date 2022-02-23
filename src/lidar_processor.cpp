@@ -36,9 +36,6 @@ namespace LidarProcessor
 LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 : Node("lidar_processor", options)
 {
-  raw_ls_subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-    "/lidar/raw_scan", 10,
-    std::bind(&LidarProcessor::raw_ls_callback, this, std::placeholders::_1));
   raw_pc_subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "/lidar/raw_points", rclcpp::SensorDataQoS(),
     std::bind(&LidarProcessor::raw_pc_callback, this, std::placeholders::_1));
@@ -48,8 +45,6 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
     std::bind(&LidarProcessor::imu_callback, this, std::placeholders::_1));
 
   // Frame ID/timing fix
-  unfiltered_ls_publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(
-    "/lidar/unfiltered_scan", rclcpp::SensorDataQoS());
   unfiltered_pc_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "/lidar/unfiltered_points", rclcpp::SensorDataQoS());
 
@@ -67,6 +62,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 
   using namespace std::chrono_literals;
   this->declare_parameter<float>("ground_point_model_threshold", 0.1f);
+  this->declare_parameter<bool>("debug_cloud", false);
   param_update_timer_ = this->create_wall_timer(
       1000ms, std::bind(&LidarProcessor::update_params, this)
       );
@@ -75,6 +71,7 @@ LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
 void LidarProcessor::update_params()
 {
   this->get_parameter("ground_point_model_threshold", ground_point_model_threshold_);
+  this->get_parameter("debug_cloud", debug_cloud_);
 }
 
 void LidarProcessor::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -122,20 +119,13 @@ void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl
   naive_fit(fit_model, cloud, ground, ground_point_model_threshold_);
 }
 
-void LidarProcessor::raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
-{
-  msg->header.stamp = this->get_clock()->now();  // rewrite time
-  msg->header.frame_id = "laser_link";  // fix weird scan frame?
-  unfiltered_ls_publisher_->publish(*msg);
-
-  // begin filter
-  filtered_ls_publisher_->publish(*msg);
-}
-
 void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
-  unfiltered_pc_publisher_->publish(*msg);
+  if (debug_cloud_)
+  {
+    unfiltered_pc_publisher_->publish(*msg);
+  }
 
   // Container for original & filtered data
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);

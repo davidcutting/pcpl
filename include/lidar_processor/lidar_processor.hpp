@@ -47,7 +47,8 @@ public:
   explicit LidarProcessor(rclcpp::NodeOptions options);
 
 private:
-  float ground_point_model_threshold_{};
+  float ground_point_model_threshold_{0.0f};
+  bool debug_cloud_{false};
   sensor_msgs::msg::Imu::SharedPtr last_imu_{};
   sensor_msgs::msg::PointCloud2::SharedPtr last_pcl_{};
   rclcpp::TimerBase::SharedPtr param_update_timer_;
@@ -56,21 +57,15 @@ private:
   void ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground);
 
   void update_params();
-  void raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
   void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
 
-  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr raw_ls_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr raw_pc_subscription_;
-
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscription_;
 
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr unfiltered_ls_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr unfiltered_pc_publisher_;
-
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr filtered_ls_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr filtered_pc_publisher_;
-
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr ground_pc_publisher_;
 
   // TF
