@@ -55,6 +55,7 @@ private:
 
   void passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
   void ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground);
+  void project_to_laserscan(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
 
   void update_params();
   void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
