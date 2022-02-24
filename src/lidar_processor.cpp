@@ -93,7 +93,7 @@ void LidarProcessor::passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr clou
   pcl::PassThrough<pcl::PointXYZI> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("intensity");
-  pass.setFilterLimits(0.0, 0.6);
+  pass.setFilterLimits(155.0, 255.0);
   pass.setNegative(false);
   pass.filter(*cloud);
 }
