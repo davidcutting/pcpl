@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 David Cutting
+// Copyright (c) 2021 David Cutting, Avery Girven
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,15 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef LIDAR_PROCESSOR__LIDAR_PROCESSOR_HPP_
-#define LIDAR_PROCESSOR__LIDAR_PROCESSOR_HPP_
+#pragma once
 
 #include <memory>
+#include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "sensor_msgs/msg/imu.hpp"
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/conversions.h>
+
+#include <tf2/exceptions.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 namespace LidarProcessor
 {
@@ -38,18 +47,30 @@ public:
   explicit LidarProcessor(rclcpp::NodeOptions options);
 
 private:
-  void raw_ls_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+  float ground_point_model_threshold_{0.0f};
+  bool debug_cloud_{false};
+  sensor_msgs::msg::Imu::SharedPtr last_imu_{};
+  sensor_msgs::msg::PointCloud2::SharedPtr last_pcl_{};
+  rclcpp::TimerBase::SharedPtr param_update_timer_;
+
+  void passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+  void ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground);
+  void project_to_laserscan(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+
+  void update_params();
   void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
 
-  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr raw_ls_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr raw_pc_subscription_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscription_;
 
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr unfiltered_ls_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr unfiltered_pc_publisher_;
-
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr filtered_ls_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr filtered_pc_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr ground_pc_publisher_;
+
+  // TF
+  std::shared_ptr<tf2_ros::TransformListener> transform_listener_;
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 };
 }  // namespace LidarProcessor
-
-#endif  // LIDAR_PROCESSOR__LIDAR_PROCESSOR_HPP_
