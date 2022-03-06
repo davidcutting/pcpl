@@ -65,8 +65,8 @@ inline void find_plane_coefficients(RModel& plane_model, const NormalVector& nor
     if (const auto* plane = std::get_if<Model::Plane>(&plane_model); plane != nullptr)
     {
         float d = norm.x * point.x
-                 + norm.y * point.y
-                 + norm.z * point.z;
+                + norm.y * point.y
+                + norm.z * point.z;
 
         // Return plane coefficients
         plane_model = Model::Plane{norm.x, norm.y, norm.z, d};
@@ -89,9 +89,9 @@ inline float distance_from_plane(const RModel& plane_model, const pcl::PointXYZI
 
         // Find: | ax + by + cz - (-d) |
         float top_half = plane->a * point.x
-                        + plane->b * point.y
-                        + plane->c * point.z
-                        - (-plane->d);
+                       + plane->b * point.y
+                       + plane->c * point.z
+                       - (-plane->d);
         top_half = std::abs(top_half);
 
         // Find: sqrt( a^2 + b^2 + c^2 )
