@@ -32,8 +32,8 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Launch arguments
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    ground_point_model_threshold LaunchConfiguration('ground_point_model_threshold', default='0.1')
-    publish_debug_cloud LaunchConfiguration('publish_debug_cloud', default='false')
+    ground_point_model_threshold = LaunchConfiguration('ground_point_model_threshold', default='0.1')
+    publish_debug_cloud = LaunchConfiguration('publish_debug_cloud', default='false')
 
     lidar_processor = Node(
         package='lidar_processor',
