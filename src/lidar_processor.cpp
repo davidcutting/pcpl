@@ -89,13 +89,46 @@ void LidarProcessor::passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr clou
   crop_box.setNegative(true); // filter out points in box
   crop_box.filter(*cloud);
 
-  // Perform Passthrough filtering
-  pcl::PassThrough<pcl::PointXYZI> pass;
-  pass.setInputCloud(cloud);
-  pass.setFilterFieldName("intensity");
-  pass.setFilterLimits(155.0, 255.0);
-  pass.setNegative(false);
-  pass.filter(*cloud);
+
+  // Perform intensity filtering
+  float min_intensity = std::numeric_limits<float>().max();
+  float max_intensity = 0.0f;
+  double sum_of_intensity = 0.0;
+  int sample_size = 0;
+  double mean_intensity;
+
+  // Calculate statistics
+  for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
+  {
+    if (it->intensity < min_intensity) min_intensity = it->intensity;
+    if (it->intensity > max_intensity) max_intensity = it->intensity;
+    sum_of_intensity = sum_of_intensity + it->intensity;
+    sample_size = sample_size + 1;
+  }
+  mean_intensity = sum_of_intensity / sample_size;
+
+  // calc standard dev
+  double numerator = 0.0;
+  for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
+  {
+    numerator = it->intensity - mean_intensity;
+  }
+  double std_dev_intensity = sqrt((numerator * numerator) / sample_size);
+  double threshold = mean_intensity - (2 * std_dev_intensity);
+
+  // Filter out points
+  pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin();
+  while (it != cloud->end())
+  {
+    if (it->intensity < threshold)
+    {
+      it = cloud->erase(it);
+    }
+    else
+    {
+      it++;
+    }
+  }
 }
 
 void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground)
