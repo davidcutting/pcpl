@@ -59,7 +59,7 @@ struct NormalVector
     float z;
 };
 
-inline void find_plane_coefficients(RModel& plane_model, const NormalVector& norm, const pcl::PointXYZI& point) noexcept
+inline void find_plane_coefficients(RModel& plane_model, const NormalVector& norm, const pcl::PointXYZIR& point) noexcept
 {
     // See if the passed in Model is truly a plane model
     if (const auto* plane = std::get_if<Model::Plane>(&plane_model); plane != nullptr)
@@ -77,7 +77,7 @@ inline void find_plane_coefficients(RModel& plane_model, const NormalVector& nor
     }
 }
 
-inline float distance_from_plane(const RModel& plane_model, const pcl::PointXYZI& point) noexcept
+inline float distance_from_plane(const RModel& plane_model, const pcl::PointXYZIR& point) noexcept
 {
     // Initialize to infinity
     float distance = std::numeric_limits<float>().infinity();
@@ -105,18 +105,19 @@ inline float distance_from_plane(const RModel& plane_model, const pcl::PointXYZI
     return distance;
 }
 
-inline void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
+inline void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZIR>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZIR>::Ptr inliers, const float& threshold)
 {   
     // Iterate over PointCloud with it[0] = x, it[1] = y, it[2] = z.
-    pcl::PointCloud<pcl::PointXYZI>::iterator it = in_pcl->begin();
+    pcl::PointCloud<pcl::PointXYZIR>::iterator it = in_pcl->begin();
     while (it != in_pcl->end())
     {
         // check if point fits model
-        pcl::PointXYZI point;
+        pcl::PointXYZIR point;
         point.x = it->x;
         point.y = it->y;
         point.z = it->z;
         point.intensity = it->intensity;
+        point.ring = it->ring;
         if(distance_from_plane(model, point) < threshold)
         {
             // NOTE: FILTER OUT POINT HERE
