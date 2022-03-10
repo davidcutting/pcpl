@@ -22,12 +22,14 @@
 
 #include "lidar_processor/lidar_processor.hpp"
 #include <lidar_processor/utils.hpp>
-
-#include <pcl/filters/crop_box.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/impl/passthrough.hpp>
+#include <pcl/filters/crop_box.h>
+#include <pcl/filters/impl/crop_box.hpp>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/impl/radius_outlier_removal.hpp>
 #include <pcl/filters/voxel_grid.h>
-
+#include <pcl/filters/impl/voxel_grid.hpp>
 #include <memory>
 #include <functional>
 
@@ -79,16 +81,15 @@ void LidarProcessor::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
   last_imu_ = msg;
 }
 
-void LidarProcessor::passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+void LidarProcessor::passthrough_stage(pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud)
 {
   // Crop out robot body
-  pcl::CropBox<pcl::PointXYZI> crop_box;
+  pcl::CropBox<pcl::PointXYZIR> crop_box;
   crop_box.setInputCloud(cloud);
   crop_box.setMin(Eigen::Vector4f(-0.2f, -0.2f, -0.2f, 1));
   crop_box.setMax(Eigen::Vector4f(0.2f, 0.2f, 0.2f, 1));
   crop_box.setNegative(true); // filter out points in box
   crop_box.filter(*cloud);
-
 
   // Perform intensity filtering
   float min_intensity = std::numeric_limits<float>().max();
@@ -117,7 +118,7 @@ void LidarProcessor::passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr clou
   double threshold = mean_intensity - (2 * std_dev_intensity);
 
   // Filter out points
-  pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin();
+  pcl::PointCloud<pcl::PointXYZIR>::iterator it = cloud->begin();
   while (it != cloud->end())
   {
     if (it->intensity < threshold)
@@ -131,7 +132,7 @@ void LidarProcessor::passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr clou
   }
 }
 
-void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground)
+void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud, pcl::PointCloud<pcl::PointXYZIR>::Ptr ground)
 {
   // Find inlier points to plane model: Segment ground plane
   RModel fit_model = Model::Plane{};
@@ -142,7 +143,7 @@ void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl
 
   // Get point in center of robot base footprint
   auto trans = tf_buffer_->lookupTransform("base_footprint", "laser_link", tf2::TimePointZero);
-  pcl::PointXYZI point;
+  pcl::PointXYZIR point;
   point.x = trans.transform.translation.x;
   point.y = trans.transform.translation.y;
   point.z = trans.transform.translation.z;
@@ -152,7 +153,7 @@ void LidarProcessor::ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl
   naive_fit(fit_model, cloud, ground, ground_point_model_threshold_);
 }
 
-void LidarProcessor::project_to_laserscan(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+void LidarProcessor::project_to_laserscan(pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud)
 {
   // fill out configuration information
   // TODO: PARAMETERIZE
@@ -180,7 +181,7 @@ void LidarProcessor::project_to_laserscan(pcl::PointCloud<pcl::PointXYZI>::Ptr c
   // Note:  A simple method is just converting cartesian to polar coordinates.
   // x = rcos(theta)
   // y = rsin(theta)
-  for (pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
+  for (pcl::PointCloud<pcl::PointXYZIR>::iterator it = cloud->begin(); it != cloud->end(); it++)
   {
     float range = std::hypot(it->x, it->y); // sqrt of x^2 + y^2
     float angle = std::atan(it->y / it->x); // tan inverse of y/x
@@ -218,8 +219,8 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   }
 
   // Container for original & filtered data
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZIR>);
+  pcl::PointCloud<pcl::PointXYZIR>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZIR>);
 
   // Convert to PCL data type
   pcl::fromROSMsg(*msg, *cloud);
@@ -229,7 +230,7 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
   ground_segmentation(cloud, ground_points);
 
   // this is outputting a scan that already has ground points filtered out from above
-  project_to_laserscan(cloud);
+  //project_to_laserscan(cloud);
 
   // Convert to ROS data type
   sensor_msgs::msg::PointCloud2 output;
