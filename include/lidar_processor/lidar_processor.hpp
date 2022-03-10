@@ -30,15 +30,14 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+#include "lidar_processor/point_type.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_types.h>
 #include <pcl/conversions.h>
 
 #include <tf2/exceptions.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
-#include "lidar_processor/point_type.hpp"
 
 namespace LidarProcessor
 {
@@ -54,9 +53,9 @@ private:
   sensor_msgs::msg::PointCloud2::SharedPtr last_pcl_{};
   rclcpp::TimerBase::SharedPtr param_update_timer_;
 
-  void passthrough_stage(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-  void ground_segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr ground);
-  void project_to_laserscan(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+  void passthrough_stage(pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud);
+  void ground_segmentation(pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud, pcl::PointCloud<pcl::PointXYZIR>::Ptr ground);
+  void project_to_laserscan(pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud);
 
   void update_params();
   void raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);

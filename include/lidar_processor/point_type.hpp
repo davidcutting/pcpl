@@ -1,16 +1,19 @@
+#define PCL_NO_PRECOMPILE
+#include <pcl/pcl_macros.h>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+
 #ifndef LIDAR_PROCESSOR_PCL_POINT_TYPES_H
 #define LIDAR_PROCESSOR_PCL_POINT_TYPES_H
 
-#include <pcl/point_types.h>
-
 namespace pcl 
 {
-    struct PointXYZIR
+    struct EIGEN_ALIGN16 PointXYZIR
     {
         PCL_ADD_POINT4D;
         float intensity;
         std::uint16_t ring;
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        PCL_MAKE_ALIGNED_OPERATOR_NEW
     };
 } // namespace pcl
 
