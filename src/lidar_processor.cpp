@@ -212,10 +212,13 @@ void LidarProcessor::project_to_laserscan(pcl::PointCloud<pcl::PointXYZI>::Ptr c
 void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
-  if (debug_cloud_)
-  {
-    unfiltered_pc_publisher_->publish(*msg);
-  }
+  pcl::PointCloud<pcl::PointXYZIR>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZIR>);
+  sensor_msgs::msg::PointCloud2 out;
+  pcl::fromROSMsg(*msg, *cloud1);
+  pcl::toROSMsg(*cloud1, out);
+
+  unfiltered_pc_publisher_->publish(out);
+
 
   // Container for original & filtered data
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
