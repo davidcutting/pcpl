@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(lidar_processor)
+project(pcpl)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -21,22 +21,28 @@ find_package(pcl_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 # BUILDING
 add_executable(
-  lidar_processor
+  ${PROJECT_NAME}
   src/lidar_processor_main.cpp
   src/lidar_processor.cpp
 )
 ament_target_dependencies(
-  lidar_processor
+  ${PROJECT_NAME}
   pcl_conversions
   pcl_ros
   rclcpp
   sensor_msgs
   std_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
-target_include_directories(lidar_processor PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
@@ -56,7 +62,7 @@ target_include_directories(pointcloud_merge PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
   
-install(TARGETS lidar_processor pointcloud_merge
+install(TARGETS ${PROJECT_NAME} pointcloud_merge
   DESTINATION lib/${PROJECT_NAME})
 
 install(
