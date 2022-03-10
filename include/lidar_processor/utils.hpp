@@ -22,15 +22,14 @@
 
 #pragma once
 
+#include <pcl/conversions.h>
+#include <pcl/point_types.h>
+
 #include <cstdint>
 #include <variant>
 
-#include <pcl/point_types.h>
-#include <pcl/conversions.h>
-
 namespace LidarProcessor
 {
-
 namespace Model
 {
 struct Plane
@@ -48,7 +47,7 @@ struct Line
     float m;
     float b;
 };
-}
+}  // namespace Model
 
 using RModel = std::variant<Model::Plane, Model::Line>;
 
@@ -64,9 +63,7 @@ inline void find_plane_coefficients(RModel& plane_model, const NormalVector& nor
     // See if the passed in Model is truly a plane model
     if (const auto* plane = std::get_if<Model::Plane>(&plane_model); plane != nullptr)
     {
-        float d = norm.x * point.x
-                + norm.y * point.y
-                + norm.z * point.z;
+        float d = norm.x * point.x + norm.y * point.y + norm.z * point.z;
 
         // Return plane coefficients
         plane_model = Model::Plane{norm.x, norm.y, norm.z, d};
@@ -88,10 +85,7 @@ inline float distance_from_plane(const RModel& plane_model, const pcl::PointXYZI
         // Calculate distance of point from plane
 
         // Find: | ax + by + cz - (-d) |
-        float top_half = plane->a * point.x
-                       + plane->b * point.y
-                       + plane->c * point.z
-                       - (-plane->d);
+        float top_half = plane->a * point.x + plane->b * point.y + plane->c * point.z - (-plane->d);
         top_half = std::abs(top_half);
 
         // Find: sqrt( a^2 + b^2 + c^2 )
@@ -106,7 +100,7 @@ inline float distance_from_plane(const RModel& plane_model, const pcl::PointXYZI
 }
 
 inline void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr in_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr inliers, const float& threshold)
-{   
+{
     // Iterate over PointCloud with it[0] = x, it[1] = y, it[2] = z.
     pcl::PointCloud<pcl::PointXYZI>::iterator it = in_pcl->begin();
     while (it != in_pcl->end())
@@ -117,7 +111,7 @@ inline void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr 
         point.y = it->y;
         point.z = it->z;
         point.intensity = it->intensity;
-        if(distance_from_plane(model, point) < threshold)
+        if (distance_from_plane(model, point) < threshold)
         {
             // NOTE: FILTER OUT POINT HERE
             it = in_pcl->erase(it);
@@ -130,4 +124,4 @@ inline void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr 
         }
     }
 }
-}
+}  // namespace LidarProcessor
