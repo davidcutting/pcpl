@@ -26,11 +26,11 @@
 #include <pcl/filters/voxel_grid.h>
 
 #include <functional>
-#include <lidar_processor/lidar_processor.hpp>
-#include <lidar_processor/utils.hpp>
+#include <pcpl/lidar_processor.hpp>
+#include <pcpl/utils.hpp>
 #include <memory>
 
-namespace LidarProcessor
+namespace pcpl
 {
 LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
     : Node("lidar_processor", options)
@@ -247,4 +247,4 @@ void LidarProcessor::raw_pc_callback(const sensor_msgs::msg::PointCloud2::Shared
     last_pcl_ = msg;
 }
 
-}  // namespace LidarProcessor
+}  // namespace pcpl

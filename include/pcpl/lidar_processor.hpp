@@ -38,7 +38,7 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "std_msgs/msg/header.hpp"
 
-namespace LidarProcessor
+namespace pcpl
 {
 class LidarProcessor : public rclcpp::Node
 {
@@ -72,4 +72,4 @@ private:
     std::shared_ptr<tf2_ros::TransformListener> transform_listener_;
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 };
-}  // namespace LidarProcessor
+}  // namespace pcpl

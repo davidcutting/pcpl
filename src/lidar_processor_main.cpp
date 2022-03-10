@@ -20,14 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <lidar_processor/lidar_processor.hpp>
+#include <pcpl/lidar_processor.hpp>
 
 int main(int argc, char* argv[])
 {
     rclcpp::init(argc, argv);
     rclcpp::executors::SingleThreadedExecutor exec;
     rclcpp::NodeOptions options;
-    auto lp_node = std::make_shared<LidarProcessor::LidarProcessor>(options);
+    auto lp_node = std::make_shared<pcpl::LidarProcessor>(options);
     exec.add_node(lp_node);
     exec.spin();
     rclcpp::shutdown();

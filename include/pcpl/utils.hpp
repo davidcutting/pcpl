@@ -28,7 +28,7 @@
 #include <cstdint>
 #include <variant>
 
-namespace LidarProcessor
+namespace pcpl
 {
 namespace Model
 {
@@ -124,4 +124,4 @@ inline void naive_fit(const RModel& model, pcl::PointCloud<pcl::PointXYZI>::Ptr 
         }
     }
 }
-}  // namespace LidarProcessor
+}  // namespace pcpl
