@@ -35,10 +35,10 @@ def generate_launch_description():
     ground_point_model_threshold = LaunchConfiguration('ground_point_model_threshold', default='0.1')
     publish_debug_cloud = LaunchConfiguration('publish_debug_cloud', default='false')
 
-    lidar_processor = Node(
-        package='lidar_processor',
-        executable='lidar_processor',
-        name='lidar_processor',
+    pcpl = Node(
+        package='pcpl',
+        executable='pcpl',
+        name='pcpl',
         output='screen',
         parameters=[{
             'use_sim_time': use_sim_time,
@@ -59,5 +59,5 @@ def generate_launch_description():
                               description='Publish all pointclouds for visualization (faster without)'),
 
         # Nodes
-        lidar_processor,
+        pcpl,
     ])
